@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+coverage
+.next
+.nuxt
+.vuepress/dist
+.serverless
+.fusebox
+.dynamodb
+.tern-port
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
