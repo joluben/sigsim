@@ -12,13 +12,15 @@ export const useNotifications = () => {
             title: '',
             message: '',
             duration: 5000, // Auto-dismiss after 5 seconds
+            actions: [], // Array of action objects { label, onClick }
+            persistent: false, // If true, won't auto-dismiss
             ...notification,
         };
 
         setNotifications(prev => [...prev, newNotification]);
 
-        // Auto-dismiss notification
-        if (newNotification.duration > 0) {
+        // Auto-dismiss notification (unless persistent)
+        if (newNotification.duration > 0 && !newNotification.persistent) {
             setTimeout(() => {
                 removeNotification(id);
             }, newNotification.duration);
@@ -36,20 +38,20 @@ export const useNotifications = () => {
     }, []);
 
     // Convenience methods
-    const showSuccess = useCallback((message, title = 'Success') => {
-        return addNotification({ type: 'success', title, message });
+    const showSuccess = useCallback((message, title = 'Success', options = {}) => {
+        return addNotification({ type: 'success', title, message, ...options });
     }, [addNotification]);
 
-    const showError = useCallback((message, title = 'Error') => {
-        return addNotification({ type: 'error', title, message, duration: 8000 });
+    const showError = useCallback((message, title = 'Error', options = {}) => {
+        return addNotification({ type: 'error', title, message, duration: 8000, ...options });
     }, [addNotification]);
 
-    const showWarning = useCallback((message, title = 'Warning') => {
-        return addNotification({ type: 'warning', title, message });
+    const showWarning = useCallback((message, title = 'Warning', options = {}) => {
+        return addNotification({ type: 'warning', title, message, ...options });
     }, [addNotification]);
 
-    const showInfo = useCallback((message, title = 'Info') => {
-        return addNotification({ type: 'info', title, message });
+    const showInfo = useCallback((message, title = 'Info', options = {}) => {
+        return addNotification({ type: 'info', title, message, ...options });
     }, [addNotification]);
 
     return {

@@ -1,9 +1,9 @@
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import {
-    CheckCircleIcon,
-    ExclamationCircleIcon,
-    ExclamationTriangleIcon,
-    InformationCircleIcon
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/solid'
 import { useEffect, useState } from 'react'
 
@@ -68,6 +68,24 @@ export function Toast({ notification, onClose }) {
           <p className={`text-sm ${notification.title ? 'mt-1' : ''}`}>
             {notification.message}
           </p>
+          {notification.actions && notification.actions.length > 0 && (
+            <div className="mt-2 flex space-x-2">
+              {notification.actions.map((action, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    action.onClick?.();
+                    if (!action.keepOpen) {
+                      handleClose();
+                    }
+                  }}
+                  className="text-xs font-medium underline hover:no-underline focus:outline-none"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="ml-4 flex-shrink-0 flex">
           <button

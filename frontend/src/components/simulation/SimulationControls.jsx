@@ -1,79 +1,29 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useStartProjectSimulation, useStopProjectSimulation } from '@/hooks/useProjects';
+import { useSimulationOperations } from '@/hooks/useSimulationOperations';
 import {
-    CheckCircleIcon,
-    ExclamationTriangleIcon,
     PlayIcon,
     StopIcon
 } from '@heroicons/react/24/outline';
-import { useState } from 'react';
 
 export default function SimulationControls({ projectId, isRunning }) {
-    const [isStarting, setIsStarting] = useState(false);
-    const [isStopping, setIsStopping] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const {
+        startSimulation,
+        stopSimulation,
+        isStarting,
+        isStopping
+    } = useSimulationOperations();
 
-    const startSimulation = useStartProjectSimulation();
-    const stopSimulation = useStopProjectSimulation();
-
-    const handleStart = async () => {
-        setIsStarting(true);
-        setError(null);
-        setSuccess(null);
-
-        try {
-            await startSimulation.mutateAsync(projectId);
-            setSuccess('Simulation started successfully');
-            setTimeout(() => setSuccess(null), 3000);
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to start simulation');
-            setTimeout(() => setError(null), 5000);
-        } finally {
-            setIsStarting(false);
-        }
+    const handleStart = () => {
+        startSimulation(projectId);
     };
 
-    const handleStop = async () => {
-        setIsStopping(true);
-        setError(null);
-        setSuccess(null);
-
-        try {
-            await stopSimulation.mutateAsync(projectId);
-            setSuccess('Simulation stopped successfully');
-            setTimeout(() => setSuccess(null), 3000);
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to stop simulation');
-            setTimeout(() => setError(null), 5000);
-        } finally {
-            setIsStopping(false);
-        }
+    const handleStop = () => {
+        stopSimulation(projectId);
     };
 
     return (
         <div className="flex items-center space-x-2">
-            {/* Success/Error Messages */}
-            {success && (
-                <Alert className="py-1 px-2 border-green-200 bg-green-50">
-                    <CheckCircleIcon className="h-3 w-3 text-green-600" />
-                    <AlertDescription className="text-xs text-green-700">
-                        {success}
-                    </AlertDescription>
-                </Alert>
-            )}
-
-            {error && (
-                <Alert variant="destructive" className="py-1 px-2">
-                    <ExclamationTriangleIcon className="h-3 w-3" />
-                    <AlertDescription className="text-xs">
-                        {error}
-                    </AlertDescription>
-                </Alert>
-            )}
-
-            {/* Control Buttons */}
+            {/* Control Buttons - Notifications are handled by useSimulationOperations */}
             {!isRunning ? (
                 <Button
                     size="sm"

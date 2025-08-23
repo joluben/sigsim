@@ -2,10 +2,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEmergencyStopSimulation, useSimulationStatus } from '@/hooks/useSimulation';
+import HelpTooltip from '@/components/ui/help-tooltip';
+import { useSimulationStatus } from '@/hooks/useSimulation';
+import { useSimulationLogNotifications } from '@/hooks/useSimulationNotifications';
 import { useSimulationWebSocket } from '@/hooks/useWebSocket';
 import {
     ClockIcon,
+    Cog6ToothIcon,
     DevicePhoneMobileIcon,
     ExclamationTriangleIcon,
     PaperAirplaneIcon,
@@ -13,11 +16,16 @@ import {
     StopIcon
 } from '@heroicons/react/24/outline';
 import { useState } from 'react';
+import ConnectionAlert from './ConnectionAlert';
+import ConnectionStatus from './ConnectionStatus';
 import DeviceStatusGrid from './DeviceStatusGrid';
+import LogViewer from './LogViewer';
 import SimulationControls from './SimulationControls';
+import SimulationNotifications from './SimulationNotifications';
 
 export default function SimulationDashboard() {
     const [selectedProject, setSelectedProject] = useState(null);
+    const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
     // Fetch simulation status
     const { data: simulationStatuses = [], isLoading, error } = useSimulationStatus();
@@ -25,8 +33,11 @@ export default function SimulationDashboard() {
     // WebSocket for real-time updates
     const { connectionStatus } = useSimulationWebSocket();
 
-    // Emergency stop mutation
-    const emergencyStopMutation = useEmergencyStopSimulation();
+    // Simulation notifications for selected project
+    const { notifications: simNotifications } = useSimulationLogNotifications(selectedProject);
+
+    // Simulation operations with retry and notifications
+    const { emergencyStop, isEmergencyStoppingAll } = useSimulationOperations();
 
     // Calculate overall statistics
     const totalProjects = simulationStatuses.length;
@@ -36,9 +47,9 @@ export default function SimulationDashboard() {
     const totalMessagesSent = simulationStatuses.reduce((sum, s) => sum + s.messages_sent, 0);
     const totalErrors = simulationStatuses.reduce((sum, s) => sum + s.errors.length, 0);
 
-    const handleEmergencyStop = async () => {
+    const handleEmergencyStop = () => {
         if (window.confirm('Are you sure you want to stop all running simulations?')) {
-            await emergencyStopMutation.mutateAsync();
+            emergencyStop();
         }
     };
 
@@ -73,6 +84,8 @@ export default function SimulationDashboard() {
 
     return (
         <div className="space-y-6">
+            {/* Simulation Notifications Handler */}
+            <SimulationNotifications simulationStatuses={simulationStatuses} />
             {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
@@ -91,13 +104,23 @@ export default function SimulationDashboard() {
                         <span className="text-sm text-muted-foreground">{connectionStatus}</span>
                     </div>
 
+                    {/* Notification Settings Toggle */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowNotificationSettings(!showNotificationSettings)}
+                    >
+                        <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                        {showNotificationSettings ? 'Hide' : 'Show'} Settings
+                    </Button>
+
                     {/* Emergency Stop */}
                     {runningProjects > 0 && (
                         <Button
                             variant="destructive"
                             size="sm"
                             onClick={handleEmergencyStop}
-                            disabled={emergencyStopMutation.isLoading}
+                            disabled={isEmergencyStoppingAll}
                         >
                             <StopIcon className="w-4 h-4 mr-2" />
                             Emergency Stop All
@@ -110,7 +133,13 @@ export default function SimulationDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Running Projects</CardTitle>
+                        <div className="flex items-center space-x-2">
+                            <CardTitle className="text-sm font-medium">Running Projects</CardTitle>
+                            <HelpTooltip
+                                content="Number of projects currently running simulations. Running projects actively send data to configured targets."
+                                type="info"
+                            />
+                        </div>
                         <PlayIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -123,7 +152,13 @@ export default function SimulationDashboard() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Devices</CardTitle>
+                        <div className="flex items-center space-x-2">
+                            <CardTitle className="text-sm font-medium">Active Devices</CardTitle>
+                            <HelpTooltip
+                                content="Number of devices currently sending data. Devices may be inactive due to errors, configuration issues, or being disabled."
+                                type="info"
+                            />
+                        </div>
                         <DevicePhoneMobileIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -136,7 +171,13 @@ export default function SimulationDashboard() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
+                        <div className="flex items-center space-x-2">
+                            <CardTitle className="text-sm font-medium">Messages Sent</CardTitle>
+                            <HelpTooltip
+                                content="Total number of messages successfully sent to target systems across all running simulations. This counter resets when the application restarts."
+                                type="info"
+                            />
+                        </div>
                         <PaperAirplaneIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -149,7 +190,13 @@ export default function SimulationDashboard() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Errors</CardTitle>
+                        <div className="flex items-center space-x-2">
+                            <CardTitle className="text-sm font-medium">Errors</CardTitle>
+                            <HelpTooltip
+                                content="Number of recent errors across all devices. Includes connection failures, payload generation errors, and send failures. Check individual devices for details."
+                                type="warning"
+                            />
+                        </div>
                         <ExclamationTriangleIcon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -160,6 +207,39 @@ export default function SimulationDashboard() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Notification Settings */}
+            {showNotificationSettings && (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold">Notification Settings</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <NotificationSettings />
+                        <ConnectionStatus />
+                    </div>
+                </div>
+            )}
+
+            {/* Connection Issues Alert */}
+            {simulationStatuses.length > 0 && (
+                <ConnectionAlert
+                    devices={simulationStatuses.flatMap(status => status.devices || [])}
+                    onRetryConnection={(deviceId) => {
+                        console.log('Retry connection for device:', deviceId);
+                        // TODO: Implement retry logic
+                    }}
+                    onConfigureTarget={(deviceId) => {
+                        console.log('Configure target for device:', deviceId);
+                        // TODO: Navigate to device configuration
+                    }}
+                    onViewLogs={() => {
+                        // Scroll to logs section or open logs modal
+                        const logsSection = document.querySelector('[data-logs-section]');
+                        if (logsSection) {
+                            logsSection.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }}
+                />
+            )}
 
             {/* Project Simulations */}
             <div className="space-y-4">
@@ -180,6 +260,7 @@ export default function SimulationDashboard() {
                         {simulationStatuses.map((status) => (
                             <Card
                                 key={status.project_id}
+                                data-project-id={status.project_id}
                                 className={`overflow-hidden cursor-pointer transition-all hover:shadow-md ${selectedProject === status.project_id ? 'ring-2 ring-blue-500' : ''
                                     }`}
                                 onClick={() => setSelectedProject(
@@ -267,7 +348,14 @@ export default function SimulationDashboard() {
             {selectedProject && (
                 <div className="space-y-4">
                     <h2 className="text-xl font-semibold">Real-time Logs</h2>
-                    <LogViewer projectId={selectedProject} />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2">
+                            <LogViewer projectId={selectedProject} />
+                        </div>
+                        <div>
+                            <ConnectionStatus projectId={selectedProject} />
+                        </div>
+                    </div>
                 </div>
             )}
 
