@@ -158,7 +158,7 @@
   - Agregar indicadores visuales de estado (activo/inactivo/error)
   - _Requirements: 4.1, 4.4_
 
-- [ ] 8.2 Crear sistema de logs en tiempo real
+- [x] 8.2 Crear sistema de logs en tiempo real
   - Implementar LogViewer para mostrar mensajes enviados
   - Configurar WebSocket client para actualizaciones en tiempo real
   - Crear buffer temporal para logs sin persistencia

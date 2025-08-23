@@ -86,7 +86,7 @@ export default function SimulationDashboard() {
                     {/* WebSocket Status */}
                     <div className="flex items-center space-x-2">
                         <div className={`w-2 h-2 rounded-full ${connectionStatus === 'Connected' ? 'bg-green-500' :
-                                connectionStatus === 'Reconnecting' ? 'bg-yellow-500' : 'bg-red-500'
+                            connectionStatus === 'Reconnecting' ? 'bg-yellow-500' : 'bg-red-500'
                             }`} />
                         <span className="text-sm text-muted-foreground">{connectionStatus}</span>
                     </div>
@@ -178,7 +178,14 @@ export default function SimulationDashboard() {
                 ) : (
                     <div className="grid gap-4">
                         {simulationStatuses.map((status) => (
-                            <Card key={status.project_id} className="overflow-hidden">
+                            <Card
+                                key={status.project_id}
+                                className={`overflow-hidden cursor-pointer transition-all hover:shadow-md ${selectedProject === status.project_id ? 'ring-2 ring-blue-500' : ''
+                                    }`}
+                                onClick={() => setSelectedProject(
+                                    selectedProject === status.project_id ? null : status.project_id
+                                )}
+                            >
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-3">
@@ -191,12 +198,19 @@ export default function SimulationDashboard() {
                                                     {status.errors.length} Error{status.errors.length !== 1 ? 's' : ''}
                                                 </Badge>
                                             )}
+                                            {selectedProject === status.project_id && (
+                                                <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                                                    Selected
+                                                </Badge>
+                                            )}
                                         </div>
 
-                                        <SimulationControls
-                                            projectId={status.project_id}
-                                            isRunning={status.is_running}
-                                        />
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <SimulationControls
+                                                projectId={status.project_id}
+                                                isRunning={status.is_running}
+                                            />
+                                        </div>
                                     </div>
 
                                     <CardDescription>
@@ -248,6 +262,47 @@ export default function SimulationDashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Real-time Logs Section */}
+            {selectedProject && (
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold">Real-time Logs</h2>
+                    <LogViewer projectId={selectedProject} />
+                </div>
+            )}
+
+            {/* Global Logs when no specific project is selected */}
+            {!selectedProject && runningProjects > 0 && (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold">Global Simulation Logs</h2>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm text-muted-foreground">Select a project to view specific logs</span>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                        {simulationStatuses
+                            .filter(status => status.is_running)
+                            .map((status) => (
+                                <div key={status.project_id} className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-medium">Project {status.project_id}</h3>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => setSelectedProject(status.project_id)}
+                                        >
+                                            View Logs
+                                        </Button>
+                                    </div>
+                                    <LogViewer projectId={status.project_id} className="h-64" />
+                                </div>
+                            ))
+                        }
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

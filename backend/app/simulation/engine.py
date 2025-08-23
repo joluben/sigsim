@@ -28,6 +28,8 @@ class SimulationProject:
         self.is_running = False
         self.started_at = None
         self.observers: List[WebSocket] = []
+        self.log_buffer: List[SimulationLogEntry] = []  # Buffer for recent logs
+        self.max_log_buffer_size = 100  # Keep last 100 logs
     
     async def start_all_devices(self):
         """Start all device simulators"""
@@ -59,11 +61,20 @@ class SimulationProject:
     
     async def notify_observers(self, log_entry: SimulationLogEntry):
         """Notify all observers of a new log entry"""
+        # Add to log buffer
+        self.log_buffer.insert(0, log_entry)  # Add to beginning
+        if len(self.log_buffer) > self.max_log_buffer_size:
+            self.log_buffer = self.log_buffer[:self.max_log_buffer_size]  # Keep only recent logs
+        
+        # Notify WebSocket observers
         disconnected = []
+        log_data = log_entry.dict()
+        
         for websocket in self.observers:
             try:
-                await websocket.send_json(log_entry.dict())
-            except:
+                await websocket.send_json(log_data)
+            except Exception as e:
+                print(f"Failed to send log to observer: {e}")
                 disconnected.append(websocket)
         
         # Remove disconnected observers
@@ -137,12 +148,20 @@ class SimulationEngine:
                 else:
                     continue  # Skip device without target
                 
+                # Create log callback function for this device
+                async def create_log_callback(project):
+                    async def log_callback(log_entry):
+                        await project.notify_observers(log_entry)
+                    return log_callback
+                
+                log_callback = await create_log_callback(sim_project)
+                
                 # Create device simulator with enhanced configuration
                 device_simulator = DeviceSimulator(
                     device_config=device,
                     payload_generator=payload_generator,
                     target_connector=connector,
-                    log_callback=lambda log_entry: asyncio.create_task(sim_project.notify_observers(log_entry)),
+                    log_callback=log_callback,
                     max_retries=3,
                     retry_delay=1.0,
                     max_consecutive_errors=10
@@ -223,15 +242,44 @@ class SimulationEngine:
     async def stream_logs(self, project_id: str, websocket: WebSocket):
         """Stream simulation logs to WebSocket"""
         if project_id not in self.running_projects:
-            await websocket.send_json({"error": "Project not running"})
+            await websocket.send_json({
+                "error": "Project not running",
+                "message": f"Project {project_id} is not currently running"
+            })
             return
         
         sim_project = self.running_projects[project_id]
         sim_project.add_observer(websocket)
         
+        # Send initial connection confirmation
+        await websocket.send_json({
+            "event_type": "connection_established",
+            "message": f"Connected to logs for project {project_id}",
+            "timestamp": datetime.utcnow().isoformat(),
+            "project_id": project_id,
+            "device_id": "system",
+            "device_name": "System"
+        })
+        
+        # Send recent logs from buffer (in reverse order to maintain chronological order)
+        for log_entry in reversed(sim_project.log_buffer[-20:]):  # Send last 20 logs
+            try:
+                await websocket.send_json(log_entry.dict())
+                await asyncio.sleep(0.01)  # Small delay to prevent overwhelming the client
+            except Exception as e:
+                print(f"Failed to send buffered log: {e}")
+                break
+        
         try:
-            # Keep connection alive
+            # Keep connection alive and handle incoming messages
             while True:
+                # Check if WebSocket is still open
+                if websocket.client_state.name != 'CONNECTED':
+                    break
+                    
                 await asyncio.sleep(1)
-        except:
+                
+        except Exception as e:
+            print(f"WebSocket error for project {project_id}: {e}")
+        finally:
             sim_project.remove_observer(websocket)
