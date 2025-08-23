@@ -1,16 +1,29 @@
-# IoT Device Simulator
+# SigSim - IoT Device Simulator
 
 Una aplicación web moderna para simular dispositivos IoT enviando datos de telemetría en tiempo real a múltiples sistemas de destino.
 
 ## 🚀 Características
 
-- **Gestión de Proyectos**: Organiza simulaciones en proyectos independientes
-- **Dispositivos Virtuales**: Configura múltiples dispositivos con metadata personalizada
-- **Generación de Payloads**: Constructor visual JSON o código Python personalizado
-- **Múltiples Destinos**: MQTT, HTTP, Kafka, WebSocket, FTP, Pub/Sub
-- **Simulación Escalable**: Soporte para miles de dispositivos concurrentes
-- **Logs en Tiempo Real**: Monitoreo de mensajes enviados via WebSocket
-- **Arquitectura Moderna**: React + FastAPI + Docker
+### ✅ Funcionalidades Implementadas
+- **Dashboard de Simulación en Tiempo Real**: Monitor y control de simulaciones con actualizaciones en vivo
+- **Grid de Estado de Dispositivos**: Indicadores visuales para estados de dispositivos (activo/inactivo/error)
+- **Gestión de Proyectos**: Operaciones CRUD completas para proyectos de simulación
+- **Conectores Múltiples**: Soporte para MQTT, HTTP, Kafka, WebSocket
+- **Generadores de Payload**: Constructor visual JSON y editor de código Python
+- **Comunicación en Tiempo Real**: Integración WebSocket para actualizaciones en vivo
+- **Controles de Emergencia**: Detener todas las simulaciones con un clic
+- **Soporte Docker**: Configuración completa de contenedorización
+
+### 🎯 Estado Actual
+**Tarea 8.1 - Dashboard de Simulación: ✅ COMPLETADA**
+
+El dashboard de simulación está completamente implementado con:
+- Estadísticas en tiempo real (proyectos ejecutándose, dispositivos activos, mensajes enviados)
+- Grid de estado de dispositivos con indicadores visuales
+- Controles start/stop para proyectos individuales
+- Funcionalidad de parada de emergencia
+- Indicador de estado de conexión WebSocket
+- Manejo de errores y notificaciones de éxito
 
 ## 🏗 Arquitectura
 
@@ -52,8 +65,8 @@ Frontend (React) ←→ Backend (FastAPI) ←→ Target Systems
 
 1. **Clonar el repositorio**
 ```bash
-git clone <repository-url>
-cd iot-simulator
+git clone https://github.com/joluben/sigsim.git
+cd sigsim
 ```
 
 2. **Iniciar con Docker Compose**
@@ -259,13 +272,33 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 - **Issues**: GitHub Issues
 - **Discusiones**: GitHub Discussions
 
+## 📋 Progreso de Implementación
+
+### ✅ Tareas Completadas
+- [x] 1.1-1.2 Configuración del proyecto y herramientas de desarrollo
+- [x] 2.1-2.3 Backend core con modelos y APIs
+- [x] 3.1-3.3 Frontend core con componentes React
+- [x] 4.1-4.2 Gestión de dispositivos
+- [x] 5.1-5.4 Conectores de sistemas de destino
+- [x] 6.1-6.4 Generadores de payload
+- [x] 7.1-7.4 Motor de simulación
+- [x] 8.1 **Dashboard de simulación** ⭐ **RECIÉN COMPLETADO**
+- [x] 12.1 Optimización de Docker
+
+### 🚧 En Progreso / Planificado
+- [ ] 8.2 Sistema de logs en tiempo real
+- [ ] 8.3 Notificaciones y manejo de errores
+- [ ] 9.1-9.3 Conectores adicionales (Kafka, WebSocket, FTP)
+- [ ] 10.1-10.3 Funcionalidades avanzadas
+- [ ] 11.1-11.3 Testing comprehensivo
+- [ ] 12.2-12.3 Documentación y escalabilidad
+
 ## 🗺 Roadmap
 
-- [ ] Autenticación de usuarios
-- [ ] Métricas avanzadas y dashboards
-- [ ] Simulación bidireccional (comandos)
-- [ ] Templates de dispositivos
-- [ ] Integración con cloud providers
-- [ ] API para automatización
-- [ ] Simulación de fallos de red
-- [ ] Escalamiento horizontal
+- [ ] Autenticación de usuarios y soporte multi-usuario
+- [ ] Dashboard de métricas y analytics avanzado
+- [ ] Marketplace de templates para escenarios IoT comunes
+- [ ] Integración con plataformas IoT en la nube (AWS IoT, Azure IoT Hub)
+- [ ] Optimización de rendimiento para simulaciones masivas
+- [ ] Streaming y filtrado de logs en tiempo real
+- [ ] Templates y presets de simulación de dispositivos
