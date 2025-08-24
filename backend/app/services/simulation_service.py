@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.device_repository import DeviceRepository
 from app.repositories.payload_repository import PayloadRepository
-from app.repositories.target_repository import TargetRepository
+from app.repositories.target_repository import TargetSystemRepository
 from app.services.connector_service import ConnectorService
 from app.simulation.engine import SimulationEngine, SimulationProject
 from app.simulation.device_simulator import DeviceSimulator
@@ -24,7 +24,7 @@ class EnhancedSimulationService:
         self.project_repository = ProjectRepository(db)
         self.device_repository = DeviceRepository(db)
         self.payload_repository = PayloadRepository(db)
-        self.target_repository = TargetRepository(db)
+        self.target_repository = TargetSystemRepository(db)
         self.connector_service = ConnectorService(self.target_repository)
         self.engine = SimulationEngine.get_instance()
     

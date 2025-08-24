@@ -1,7 +1,7 @@
 """
 Target System Pydantic models for API validation
 """
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, model_validator
 from typing import Dict, Any, Optional
 from datetime import datetime
 from enum import Enum
@@ -43,6 +43,8 @@ class TargetSystemBase(BaseModel):
             return cls._validate_kafka_config(v)
         elif target_type == TargetType.WEBSOCKET:
             return cls._validate_websocket_config(v)
+        elif target_type == TargetType.FTP:
+            return cls._validate_ftp_config(v)
         
         return v
     
@@ -92,6 +94,19 @@ class TargetSystemBase(BaseModel):
         url = config['url']
         if not (url.startswith('ws://') or url.startswith('wss://')):
             raise ValueError('WebSocket URL must start with ws:// or wss://')
+        
+        return config
+    
+    @staticmethod
+    def _validate_ftp_config(config):
+        required_fields = ['host', 'username', 'password']
+        for field in required_fields:
+            if field not in config:
+                raise ValueError(f'FTP configuration missing required field: {field}')
+        
+        port = config.get('port', 21)
+        if not isinstance(port, int) or port < 1 or port > 65535:
+            raise ValueError('FTP port must be between 1 and 65535')
         
         return config
 
@@ -174,6 +189,18 @@ class KafkaConfig(BaseModel):
     sasl_mechanism: Optional[str] = Field(None, description="SASL mechanism")
     sasl_username: Optional[str] = Field(None, description="SASL username")
     sasl_password: Optional[str] = Field(None, description="SASL password")
+    
+    # Partition and key configuration
+    partition: Optional[int] = Field(None, ge=0, description="Specific partition to send to (optional)")
+    key_field: Optional[str] = Field(None, description="Field from payload to use as message key")
+    key_static: Optional[str] = Field(None, description="Static key for all messages")
+    
+    @model_validator(mode='after')
+    def validate_key_options(self):
+        # Only one key option should be specified
+        if self.key_field and self.key_static:
+            raise ValueError('Cannot specify both key_field and key_static')
+        return self
 
 
 class WebSocketConfig(BaseModel):

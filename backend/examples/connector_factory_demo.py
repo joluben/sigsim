@@ -107,6 +107,73 @@ async def demo_mqtt_connector():
         print(f"✗ MQTT connector demo failed: {e}")
 
 
+async def demo_kafka_connector():
+    """Demonstrate Kafka connector usage (requires Kafka cluster)"""
+    print("\n=== Kafka Connector Demo ===")
+    
+    config = {
+        "bootstrap_servers": "localhost:9092",
+        "topic": "iot-simulator-demo",
+        "security_protocol": "PLAINTEXT",
+        "partition": 0,  # Optional: specific partition
+        "key_field": "device_id"  # Optional: use device_id as message key
+    }
+    
+    try:
+        # Create connector using factory
+        connector = ConnectorFactory.create_connector(TargetType.KAFKA, config)
+        print(f"✓ Created Kafka connector for {config['bootstrap_servers']}")
+        
+        # Connect
+        connected = await connector.connect()
+        if connected:
+            print("✓ Connected to Kafka cluster")
+            
+            # Send test payload with partition and key
+            test_payload = {
+                "device_id": "demo-device-004",
+                "sensor_type": "pressure",
+                "value": 1013.25,
+                "unit": "hPa",
+                "location": "warehouse-a",
+                "timestamp": "2024-01-01T12:00:00Z"
+            }
+            
+            sent = await connector.send(test_payload)
+            if sent:
+                print("✓ Test payload sent successfully")
+                print(f"  Topic: {config['topic']}")
+                print(f"  Partition: {config.get('partition', 'auto')}")
+                print(f"  Key: {test_payload.get(config.get('key_field', ''), 'none')}")
+                print(f"  Payload: {json.dumps(test_payload, indent=2)}")
+            else:
+                print("✗ Failed to send test payload")
+            
+            # Send another payload to demonstrate key-based partitioning
+            test_payload_2 = {
+                "device_id": "demo-device-005",
+                "sensor_type": "temperature",
+                "value": 22.1,
+                "unit": "°C",
+                "location": "warehouse-b",
+                "timestamp": "2024-01-01T12:01:00Z"
+            }
+            
+            sent_2 = await connector.send(test_payload_2)
+            if sent_2:
+                print("✓ Second test payload sent successfully")
+                print(f"  Key: {test_payload_2.get(config.get('key_field', ''), 'none')}")
+            
+            # Disconnect
+            await connector.disconnect()
+            print("✓ Disconnected from Kafka cluster")
+        else:
+            print("✗ Failed to connect to Kafka cluster")
+            
+    except Exception as e:
+        print(f"✗ Kafka connector demo failed: {e}")
+
+
 async def demo_websocket_connector():
     """Demonstrate WebSocket connector usage"""
     print("\n=== WebSocket Connector Demo ===")
@@ -260,6 +327,7 @@ async def main():
     
     await demo_http_connector()
     await demo_mqtt_connector()
+    await demo_kafka_connector()
     await demo_websocket_connector()
     
     print("\n" + "=" * 50)

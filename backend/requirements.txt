@@ -8,7 +8,7 @@ sqlalchemy==2.0.23
 alembic==1.12.1
 
 # Validation and serialization
-pydantic==2.5.0
+pydantic==2.4.2
 
 # Authentication (for future use)
 python-jose[cryptography]==3.3.0
@@ -22,10 +22,14 @@ httpx==0.25.2
 paho-mqtt==1.6.1
 
 # Kafka
-aiokafka==0.8.11
+aiokafka==0.12.0
 
 # WebSocket
 websockets==12.0
+
+# FTP/SFTP
+aioftp==0.21.4
+asyncssh==2.14.2
 
 # Utilities
 python-dotenv==1.0.0

@@ -11,7 +11,7 @@ from app.simulation.connectors import ConnectorFactory
 from app.models.target import TargetType
 from app.repositories.project_repository import ProjectRepository
 from app.repositories.device_repository import DeviceRepository
-from app.repositories.target_repository import TargetRepository
+from app.repositories.target_repository import TargetSystemRepository
 from app.repositories.payload_repository import PayloadRepository
 from app.simulation.payload_generators.visual_generator import VisualPayloadGenerator
 from app.simulation.payload_generators.python_runner import PythonCodeGenerator
@@ -102,7 +102,7 @@ class SimulationEngine:
         project_id: str,
         project_repository: ProjectRepository,
         device_repository: DeviceRepository,
-        target_repository: TargetRepository,
+        target_repository: TargetSystemRepository,
         payload_repository: PayloadRepository
     ) -> bool:
         """Start simulation for a project"""

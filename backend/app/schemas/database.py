@@ -36,7 +36,7 @@ class Device(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(100), nullable=False)
-    metadata = Column(JSON, default=dict)
+    device_metadata = Column(JSON, default=dict)
     payload_id = Column(String(36), ForeignKey("payloads.id", ondelete="SET NULL"))
     target_system_id = Column(String(36), ForeignKey("target_systems.id", ondelete="SET NULL"))
     send_interval = Column(Integer, default=10, nullable=False)  # seconds

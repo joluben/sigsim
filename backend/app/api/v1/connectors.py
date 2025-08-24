@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.services.connector_service import ConnectorService
-from app.repositories.target_repository import TargetRepository
+from app.repositories.target_repository import TargetSystemRepository
 from app.core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -57,7 +57,7 @@ class HealthCheckResponse(BaseModel):
 
 def get_connector_service(db: AsyncSession = Depends(get_db)) -> ConnectorService:
     """Dependency to get connector service"""
-    target_repository = TargetRepository(db)
+    target_repository = TargetSystemRepository(db)
     return ConnectorService(target_repository)
 
 

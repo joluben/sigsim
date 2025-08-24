@@ -61,15 +61,27 @@ class FTPConnector(TargetConnector):
                 temp_file_path = temp_file.name
             
             try:
-                # Upload file
+                # Ensure remote directory exists and upload file
                 remote_path = os.path.join(self.config.path, filename).replace('\\', '/')
                 
                 if self.config.use_sftp:
                     # SFTP upload
                     async with self.client.start_sftp_client() as sftp:
+                        # Try to create directory if it doesn't exist
+                        try:
+                            await sftp.makedirs(self.config.path, exist_ok=True)
+                        except Exception:
+                            pass  # Directory might already exist or we might not have permissions
+                        
                         await sftp.put(temp_file_path, remote_path)
                 else:
                     # FTP upload
+                    # Try to create directory if it doesn't exist
+                    try:
+                        await self.client.make_directory(self.config.path)
+                    except Exception:
+                        pass  # Directory might already exist or we might not have permissions
+                    
                     await self.client.upload(temp_file_path, remote_path)
                 
                 return True

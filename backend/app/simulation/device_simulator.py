@@ -91,6 +91,9 @@ class DeviceSimulator:
         await self._log_event("started", "Device simulation started")
         
         try:
+            # Start auto-reconnection for WebSocket connectors
+            await self._start_auto_reconnection()
+            
             # Initial connection to target system
             await self._ensure_connection()
             
@@ -139,6 +142,7 @@ class DeviceSimulator:
             pass
         finally:
             self.is_running = False
+            await self._stop_auto_reconnection()
             await self._safe_disconnect()
             await self._log_event("stopped", "Device simulation stopped")
     
@@ -155,11 +159,51 @@ class DeviceSimulator:
             )
             await self.log_callback(log_entry)
     
+    async def _start_auto_reconnection(self):
+        """Start auto-reconnection for WebSocket connectors"""
+        from app.simulation.connectors.websocket_connector import WebSocketConnector
+        
+        if isinstance(self.connector, WebSocketConnector):
+            await self.connector.start_auto_reconnect()
+            await self._log_event("info", "Auto-reconnection started for WebSocket connector")
+    
+    async def _stop_auto_reconnection(self):
+        """Stop auto-reconnection for WebSocket connectors"""
+        from app.simulation.connectors.websocket_connector import WebSocketConnector
+        
+        if isinstance(self.connector, WebSocketConnector):
+            await self.connector.stop_auto_reconnect()
+            await self._log_event("info", "Auto-reconnection stopped for WebSocket connector")
+    
     async def _ensure_connection(self):
         """Ensure connection to target system with retry logic"""
+        from app.simulation.connectors.websocket_connector import WebSocketConnector
+        
         if self.is_connected:
             return True
         
+        # For WebSocket connectors with auto-reconnection, just try once
+        # as they handle their own reconnection logic
+        if isinstance(self.connector, WebSocketConnector):
+            try:
+                self.last_connection_attempt = datetime.utcnow()
+                success = await self.connector.connect()
+                
+                if success:
+                    self.is_connected = True
+                    await self._log_event("connected", f"Connected to {self.connector.__class__.__name__}")
+                    return True
+                else:
+                    await self._log_event("warning", "WebSocket connection failed, auto-reconnection will handle retries")
+                    return False
+                    
+            except Exception as e:
+                error_msg = f"WebSocket connection failed: {str(e)}"
+                self.stats.record_error(error_msg, "connection")
+                await self._log_event("warning", error_msg + ", auto-reconnection will handle retries")
+                return False
+        
+        # For other connectors, use the original retry logic
         for attempt in range(self.max_retries + 1):
             try:
                 self.last_connection_attempt = datetime.utcnow()
@@ -229,8 +273,53 @@ class DeviceSimulator:
     
     async def _send_with_retry(self, payload: Dict[str, Any]) -> bool:
         """Send payload with retry logic"""
+        from app.simulation.connectors.websocket_connector import WebSocketConnector
+        
         start_time = datetime.utcnow()
         
+        # For WebSocket connectors, rely on their internal retry logic
+        if isinstance(self.connector, WebSocketConnector):
+            try:
+                send_start = datetime.utcnow()
+                success = await self.connector.send(payload)
+                response_time = (datetime.utcnow() - send_start).total_seconds()
+                
+                if success:
+                    # Record successful send
+                    payload_size = len(str(payload).encode('utf-8'))
+                    metrics_collector.record_connector_success(
+                        self.connector_id,
+                        self.connector.__class__.__name__,
+                        response_time,
+                        payload_size
+                    )
+                    self.device_metrics.record_message_sent()
+                    self.is_connected = True  # Update connection status
+                    return True
+                else:
+                    # WebSocket connector handles its own retries, so this is a final failure
+                    metrics_collector.record_connector_failure(
+                        self.connector_id,
+                        self.connector.__class__.__name__,
+                        "WebSocket send failed after internal retries"
+                    )
+                    self.device_metrics.record_send_failure()
+                    self.is_connected = False  # Update connection status
+                    return False
+                    
+            except Exception as e:
+                error_msg = f"WebSocket send failed: {str(e)}"
+                self.stats.record_error(error_msg, "send")
+                metrics_collector.record_connector_failure(
+                    self.connector_id,
+                    self.connector.__class__.__name__,
+                    str(e)
+                )
+                self.device_metrics.record_send_failure()
+                self.is_connected = False
+                return False
+        
+        # For other connectors, use the original retry logic
         for attempt in range(self.max_retries + 1):
             try:
                 # Ensure we're connected before sending
@@ -318,7 +407,9 @@ class DeviceSimulator:
     
     def get_status(self):
         """Get current device status"""
-        return {
+        from app.simulation.connectors.websocket_connector import WebSocketConnector
+        
+        status = {
             "device_id": self.config.id,
             "device_name": self.config.name,
             "is_running": self.is_running,
@@ -334,3 +425,10 @@ class DeviceSimulator:
             "last_error": self.stats.last_error,
             "last_connection_attempt": self.last_connection_attempt
         }
+        
+        # Add WebSocket-specific connection statistics
+        if isinstance(self.connector, WebSocketConnector):
+            websocket_stats = self.connector.get_connection_stats()
+            status["websocket_stats"] = websocket_stats
+        
+        return status

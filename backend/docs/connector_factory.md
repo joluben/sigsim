@@ -167,9 +167,88 @@ config = {
     "security_protocol": "PLAINTEXT",  # PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
     "sasl_mechanism": "PLAIN",  # opcional
     "sasl_username": "kafka_user",  # opcional
-    "sasl_password": "kafka_pass"  # opcional
+    "sasl_password": "kafka_pass",  # opcional
+    "partition": 0,  # opcional: partición específica
+    "key_field": "device_id",  # opcional: campo del payload como key
+    "key_static": "building-a"  # opcional: key estática
 }
 ```
+
+#### Configuración Detallada Kafka
+
+**Campos Requeridos:**
+- `bootstrap_servers`: Lista de brokers Kafka (formato: "host1:port1,host2:port2")
+- `topic`: Tópico Kafka donde enviar mensajes
+
+**Campos Opcionales:**
+- `security_protocol`: Protocolo de seguridad (PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL)
+- `sasl_mechanism`: Mecanismo SASL para autenticación (PLAIN, SCRAM-SHA-256, SCRAM-SHA-512)
+- `sasl_username`: Usuario para autenticación SASL
+- `sasl_password`: Contraseña para autenticación SASL
+- `partition`: Partición específica donde enviar mensajes (opcional, por defecto usa particionado automático)
+- `key_field`: Campo del payload a usar como message key para particionado
+- `key_static`: Key estática para todos los mensajes
+
+**Ejemplos de Configuración:**
+
+```python
+# Configuración básica
+basic_config = {
+    "bootstrap_servers": "localhost:9092",
+    "topic": "iot-sensors"
+}
+
+# Con partición específica
+partition_config = {
+    "bootstrap_servers": "kafka1:9092,kafka2:9092,kafka3:9092",
+    "topic": "iot-data",
+    "partition": 2
+}
+
+# Con key dinámico basado en campo del payload
+key_field_config = {
+    "bootstrap_servers": "localhost:9092",
+    "topic": "device-telemetry",
+    "key_field": "device_id"  # Usa device_id del payload como key
+}
+
+# Con key estático
+static_key_config = {
+    "bootstrap_servers": "localhost:9092",
+    "topic": "building-sensors",
+    "key_static": "building-a"  # Todos los mensajes usan la misma key
+}
+
+# Con autenticación SASL
+sasl_config = {
+    "bootstrap_servers": "secure-kafka:9093",
+    "topic": "secure-iot-data",
+    "security_protocol": "SASL_SSL",
+    "sasl_mechanism": "SCRAM-SHA-256",
+    "sasl_username": "iot_producer",
+    "sasl_password": "secure_password"
+}
+
+# Configuración completa
+full_config = {
+    "bootstrap_servers": "kafka1:9092,kafka2:9092,kafka3:9092",
+    "topic": "production-iot-data",
+    "security_protocol": "SASL_SSL",
+    "sasl_mechanism": "SCRAM-SHA-256",
+    "sasl_username": "production_user",
+    "sasl_password": "production_password",
+    "partition": 1,
+    "key_field": "sensor_id"
+}
+```
+
+**Particionado y Keys:**
+- Sin `partition` ni `key_*`: Kafka usa particionado round-robin
+- Con `partition`: Todos los mensajes van a la partición especificada
+- Con `key_field`: Usa el valor del campo especificado como message key
+- Con `key_static`: Usa el valor estático como message key para todos los mensajes
+- Los keys determinan la partición usando hash consistente
+- Solo se puede especificar una opción de key (`key_field` o `key_static`)
 
 ### WebSocket
 

@@ -4,13 +4,13 @@ Service for managing target system connectors
 from typing import Dict, Any, List
 from app.simulation.connectors import ConnectorFactory, TargetConnector
 from app.models.target import TargetType
-from app.repositories.target_repository import TargetRepository
+from app.repositories.target_repository import TargetSystemRepository
 
 
 class ConnectorService:
     """Service for managing target system connectors"""
     
-    def __init__(self, target_repository: TargetRepository):
+    def __init__(self, target_repository: TargetSystemRepository):
         self.target_repository = target_repository
         self._active_connectors: Dict[str, TargetConnector] = {}
     
