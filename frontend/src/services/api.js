@@ -2,11 +2,12 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    baseURL: import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_API_URL || '/api',
     timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: false,
 });
 
 // Request interceptor for adding auth tokens (future use)

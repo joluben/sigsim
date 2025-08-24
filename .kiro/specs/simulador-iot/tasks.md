@@ -175,19 +175,41 @@
 - [ ] 9.1 Implementar conector Kafka
   - [x] Crear KafkaConnector usando aiokafka
   - [x] Configurar bootstrap servers, tópicos y configuración SSL
-  - [ ] Agregar manejo de particiones y keys
-  - [ ] Integrar conector Kafka con el sistema de factory
+  - [x] Agregar manejo de particiones y keys
+
+
+
+
+
+  - [x] Integrar conector Kafka con el sistema de factory
+
+
+
+
+
   - _Requirements: 6.3, 6.7_
 
 - [ ] 9.2 Implementar conector WebSocket
   - [x] Crear WebSocketConnector para streaming persistente
   - [x] Configurar conexiones ws:// y wss://
-  - [ ] Implementar reconexión automática
-  - [ ] Integrar conector WebSocket con el sistema de factory
+  - [x] Implementar reconexión automática
+
+
+
+
+  - [x] Integrar conector WebSocket con el sistema de factory
+
+
+
   - _Requirements: 6.4, 6.7_
 
 - [ ] 9.3 Agregar conectores para colas Pub/Sub y FTP
-  - [ ] Implementar FTPConnector para transferencia de archivos
+  - [x] Implementar FTPConnector para transferencia de archivos
+
+
+
+
+
   - [ ] Implementar conector genérico para sistemas AMQP
   - [ ] Crear configuración para Google Cloud Pub/Sub
   - [ ] Agregar soporte para Amazon SNS/SQS

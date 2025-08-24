@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:///./data/app.db
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:80
     volumes:
       - ./data:/app/data
       - ./backend:/app
@@ -30,7 +30,7 @@ services:
     depends_on:
       - backend
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
+      - VITE_API_URL=http://backend:8000
     restart: unless-stopped
 
   # Optional services for development and testing
@@ -72,3 +72,7 @@ volumes:
   mosquitto_config:
   mosquitto_data:
   mosquitto_log:
+
+networks:
+  default:
+    driver: bridge
