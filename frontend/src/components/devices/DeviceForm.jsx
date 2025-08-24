@@ -19,6 +19,7 @@ import {
 } from '../../hooks'
 import { useFormValidation, validationRules } from '../../hooks/useFormValidation'
 import { useNotificationContext } from '../providers/NotificationProvider'
+import DeviceConfigurationTest from './DeviceConfigurationTest'
 import DeviceConfigurationValidator from './DeviceConfigurationValidator'
 import DeviceMetadataEditor from './DeviceMetadataEditor'
 
@@ -244,16 +245,21 @@ export default function DeviceForm({
                   disabled={payloadsLoading}
                 >
                   <SelectTrigger className={errors.payload_id && touched.payload_id ? 'border-red-500' : ''}>
-                    <SelectValue placeholder={payloadsLoading ? "Loading payloads..." : "Select a payload generator"} />
+                    <SelectValue placeholder={payloadsLoading ? "Loading payloads..." : "Select a payload generator"}>
+                      {selectedPayload ? selectedPayload.name : null}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto">
                     {payloads.map((payload) => (
-                      <SelectItem key={payload.id} value={payload.id}>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={payload.type === 'visual' ? 'default' : 'secondary'} className="text-xs">
+                      <SelectItem key={payload.id} value={payload.id} className="cursor-pointer">
+                        <div className="flex items-center space-x-2 w-full">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${payload.type === 'visual'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                            }`}>
                             {payload.type}
-                          </Badge>
-                          <span>{payload.name}</span>
+                          </span>
+                          <span className="flex-1">{payload.name}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -285,16 +291,18 @@ export default function DeviceForm({
                   disabled={targetsLoading}
                 >
                   <SelectTrigger className={errors.target_system_id && touched.target_system_id ? 'border-red-500' : ''}>
-                    <SelectValue placeholder={targetsLoading ? "Loading targets..." : "Select a target system"} />
+                    <SelectValue placeholder={targetsLoading ? "Loading targets..." : "Select a target system"}>
+                      {selectedTarget ? selectedTarget.name : null}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto">
                     {targetSystems.map((target) => (
-                      <SelectItem key={target.id} value={target.id}>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className="text-xs">
+                      <SelectItem key={target.id} value={target.id} className="cursor-pointer">
+                        <div className="flex items-center space-x-2 w-full">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border">
                             {target.type.toUpperCase()}
-                          </Badge>
-                          <span>{target.name}</span>
+                          </span>
+                          <span className="flex-1">{target.name}</span>
                         </div>
                       </SelectItem>
                     ))}

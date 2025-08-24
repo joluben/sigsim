@@ -33,7 +33,7 @@ export const payloadService = {
 
     // Generate sample payload
     generateSample: async (id, deviceMetadata = {}) => {
-        const response = await api.post(`/payloads/${id}/generate`, {
+        const response = await api.post(`/payloads/${id}/test`, {
             device_metadata: deviceMetadata
         });
         return response.data;

@@ -40,7 +40,7 @@ export const useCreateDevice = () => {
 
     return useMutation({
         mutationFn: ({ projectId, ...deviceData }) =>
-            deviceService.create(projectId, deviceData),
+            deviceService.create({ project_id: projectId, ...deviceData }),
         onSuccess: (newDevice) => {
             // Invalidate devices list for the project
             queryClient.invalidateQueries(

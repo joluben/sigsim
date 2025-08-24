@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { useEffect } from 'react'
 import { useCreateProject, useUpdateProject } from '../../hooks'
 import { useFormValidation, validationRules } from '../../hooks/useFormValidation'
@@ -18,19 +19,19 @@ const projectValidationRules = {
   ]
 }
 
-export default function ProjectForm({ 
-  project = null, 
-  onSuccess, 
+export default function ProjectForm({
+  project = null,
+  onSuccess,
   onCancel,
-  className = "" 
+  className = ""
 }) {
   const isEditing = !!project
   const { showSuccess, showError } = useNotificationContext()
-  
+
   // Mutations
   const createProject = useCreateProject()
   const updateProject = useUpdateProject()
-  
+
   // Form validation
   const {
     values,
@@ -73,7 +74,7 @@ export default function ProjectForm({
         result = await createProject.mutateAsync(formData)
         showSuccess(`Project "${result.name}" created successfully`)
       }
-      
+
       onSuccess?.(result)
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'An error occurred'
@@ -93,13 +94,13 @@ export default function ProjectForm({
           {isEditing ? 'Edit Project' : 'Create New Project'}
         </CardTitle>
         <CardDescription>
-          {isEditing 
+          {isEditing
             ? 'Update the project information below.'
             : 'Fill in the details to create a new IoT simulation project.'
           }
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent>
         <form onSubmit={handleFormSubmit} className="space-y-4">
           {/* Project Name */}

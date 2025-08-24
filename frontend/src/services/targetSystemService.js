@@ -33,9 +33,7 @@ export const targetSystemService = {
 
     // Test connection to target system
     testConnection: async (id) => {
-        const response = await api.post(`/connectors/test`, {
-            target_system_id: id
-        });
+        const response = await api.post(`/targets/${id}/test-connection`);
         return response.data;
     },
 

@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { DeviceForm } from '../components/devices'
+import DeviceProjectAssignment from '../components/devices/DeviceProjectAssignment'
 import { useDevice, useProject } from '../hooks'
 
 export default function DeviceFormPage() {
@@ -83,7 +83,7 @@ export default function DeviceFormPage() {
       {/* Form */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <DeviceForm
+          <DeviceFormSimple
             device={device}
             projectId={projectId}
             onSuccess={handleSuccess}

@@ -23,9 +23,49 @@ import {
   useStartProjectSimulation,
   useStopProjectSimulation
 } from '../../hooks'
+import DeviceConfigurationSummary from '../devices/DeviceConfigurationSummary'
 import DeviceList from '../devices/DeviceList'
 import { useNotificationContext } from '../providers/NotificationProvider'
 import ProjectForm from './ProjectForm'
+
+// Hook for simulation validation
+const useSimulationValidation = (project, devices) => {
+  if (!project || !devices) {
+    return {
+      canStartSimulation: false,
+      errors: ['Project or devices not loaded'],
+      warnings: [],
+      readyDevicesCount: 0
+    }
+  }
+
+  const errors = []
+  const warnings = []
+  let readyDevicesCount = 0
+
+  if (devices.length === 0) {
+    errors.push('No devices configured')
+  } else {
+    devices.forEach(device => {
+      if (!device.is_enabled) {
+        warnings.push(`Device "${device.name}" is disabled`)
+      } else if (!device.has_payload) {
+        errors.push(`Device "${device.name}" has no payload configured`)
+      } else if (!device.has_target) {
+        errors.push(`Device "${device.name}" has no target system configured`)
+      } else {
+        readyDevicesCount++
+      }
+    })
+  }
+
+  return {
+    canStartSimulation: errors.length === 0 && readyDevicesCount > 0,
+    errors,
+    warnings,
+    readyDevicesCount
+  }
+}
 
 export default function ProjectDetail({ projectId }) {
   const [isEditing, setIsEditing] = useState(false)

@@ -3,7 +3,7 @@ import api from './api';
 export const deviceService = {
     // Get all devices for a project
     getByProject: async (projectId) => {
-        const response = await api.get(`/projects/${projectId}/devices`);
+        const response = await api.get(`/devices/project/${projectId}`);
         return response.data;
     },
 
@@ -14,8 +14,8 @@ export const deviceService = {
     },
 
     // Create new device
-    create: async (projectId, deviceData) => {
-        const response = await api.post(`/projects/${projectId}/devices`, deviceData);
+    create: async (deviceData) => {
+        const response = await api.post('/devices', deviceData);
         return response.data;
     },
 

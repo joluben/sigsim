@@ -1,13 +1,13 @@
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
-export function Select({ 
-  value, 
-  onValueChange, 
+export function Select({
+  value,
+  onValueChange,
   placeholder = "Select an option...",
   disabled = false,
   className = "",
-  children 
+  children
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const selectRef = useRef(null)
@@ -30,20 +30,25 @@ export function Select({
 
   return (
     <div className={`relative ${className}`} ref={selectRef}>
-      <SelectTrigger 
+      <SelectTrigger
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         isOpen={isOpen}
       >
         <SelectValue value={value} placeholder={placeholder} />
       </SelectTrigger>
-      
+
       {isOpen && (
         <SelectContent>
-          {children && typeof children === 'function' 
-            ? children({ onSelect: handleSelect, selectedValue: value })
-            : children
-          }
+          {React.Children.map(children, child => {
+            if (React.isValidElement(child) && child.type === SelectItem) {
+              return React.cloneElement(child, {
+                onSelect: handleSelect,
+                selectedValue: value
+              })
+            }
+            return child
+          })}
         </SelectContent>
       )}
     </div>
@@ -70,10 +75,10 @@ export function SelectTrigger({ children, onClick, disabled, isOpen, className =
   )
 }
 
-export function SelectValue({ value, placeholder }) {
+export function SelectValue({ value, placeholder, children }) {
   return (
     <span className={value ? '' : 'text-muted-foreground'}>
-      {value || placeholder}
+      {children || value || placeholder}
     </span>
   )
 }
@@ -93,16 +98,24 @@ export function SelectContent({ children, className = "" }) {
 export function SelectItem({ value, onSelect, selectedValue, children, className = "" }) {
   const isSelected = value === selectedValue
 
+  const handleClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onSelect?.(value)
+  }
+
   return (
     <div
       className={`
-        relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 
+        relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 
         text-sm outline-none hover:bg-accent hover:text-accent-foreground 
         focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none 
-        data-[disabled]:opacity-50 cursor-pointer
+        data-[disabled]:opacity-50
         ${className}
       `}
-      onClick={() => onSelect?.(value)}
+      onClick={handleClick}
+      role="option"
+      aria-selected={isSelected}
     >
       {isSelected && (
         <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
