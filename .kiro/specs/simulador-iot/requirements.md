@@ -22,15 +22,47 @@ El simulador de dispositivos IoT es una aplicación web que permite a desarrolla
 
 ### Requirement 2
 
-**User Story:** Como usuario técnico, quiero un constructor visual de JSON intuitivo, para poder definir payloads complejos sin necesidad de escribir código manualmente.
+**User Story:** Como usuario técnico, quiero un constructor visual de JSON Schema intuitivo, para poder definir payloads complejos con validación y reglas de generación sin necesidad de escribir código manualmente.
 
 #### Acceptance Criteria
 
-1. WHEN el usuario define un payload THEN el sistema SHALL ofrecer un constructor visual de JSON con interfaz drag-and-drop
-2. WHEN el usuario usa el constructor visual THEN el sistema SHALL permitir agregar campos con nombre, tipo de dato y reglas de generación
-3. WHEN el usuario define reglas de generación THEN el sistema SHALL mostrar opciones para números aleatorios, listas predefinidas, UUIDs, timestamps y booleanos
-4. WHEN el usuario requiere lógica compleja THEN el sistema SHALL proporcionar un editor de código Python integrado en la interfaz
-5. WHEN el usuario escribe código Python THEN el sistema SHALL mostrar syntax highlighting y validación básica
+1. WHEN el usuario accede al constructor THEN el sistema SHALL mostrar una interfaz visual con componentes shadcn/ui para crear esquemas JSON
+2. WHEN el usuario agrega un campo THEN el sistema SHALL permitir seleccionar tipo de dato (string, integer, float, boolean, date, datetime, object, array)
+3. WHEN el usuario define un campo THEN el sistema SHALL permitir asignar nombre de clave JSON editable
+4. WHEN el usuario configura valores THEN el sistema SHALL ofrecer opciones de valor fijo o generación aleatoria
+5. WHEN el usuario selecciona generación aleatoria THEN el sistema SHALL mostrar reglas específicas por tipo:
+   - Para números: campos mínimo y máximo
+   - Para strings: campo de patrón regex
+   - Para fechas: rango de fechas válidas
+   - Para arrays: tipo de elementos y cantidad mín/máx
+6. WHEN el usuario crea objetos anidados THEN el sistema SHALL permitir agregar subcampos con anidamiento arbitrario
+7. WHEN el usuario define arrays THEN el sistema SHALL permitir especificar el tipo y esquema de los elementos internos
+8. WHEN el usuario construye el esquema THEN el sistema SHALL mostrar vista previa del JSON Schema en tiempo real
+9. WHEN el usuario modifica campos THEN el sistema SHALL validar el esquema resultante y mostrar errores si los hay
+10. WHEN el usuario guarda el esquema THEN el sistema SHALL persistir la configuración en la base de datos
+11. WHEN el usuario edita un esquema existente THEN el sistema SHALL cargar la configuración previa y permitir modificaciones
+12. WHEN el usuario usa drag-and-drop THEN el sistema SHALL permitir reordenar campos visualmente
+13. WHEN el usuario requiere lógica compleja THEN el sistema SHALL proporcionar un editor de código Python integrado como alternativa
+14. WHEN el usuario escribe código Python THEN el sistema SHALL mostrar syntax highlighting y validación básica
+
+### Requirement 2.1
+
+**User Story:** Como desarrollador IoT, quiero funcionalidades avanzadas en el constructor de JSON Schema, para poder crear esquemas complejos con validación robusta y generación de datos de prueba.
+
+#### Acceptance Criteria
+
+1. WHEN el usuario define restricciones THEN el sistema SHALL soportar propiedades JSON Schema estándar (minimum, maximum, pattern, minLength, maxLength)
+2. WHEN el usuario configura strings THEN el sistema SHALL permitir patrones regex personalizados para validación y generación
+3. WHEN el usuario trabaja con números THEN el sistema SHALL soportar restricciones de múltiplos (multipleOf) y exclusión de límites
+4. WHEN el usuario crea campos opcionales THEN el sistema SHALL permitir marcar campos como requeridos o opcionales
+5. WHEN el usuario define valores por defecto THEN el sistema SHALL permitir asignar valores default para campos opcionales
+6. WHEN el usuario necesita ejemplos THEN el sistema SHALL generar datos de muestra basados en el esquema definido
+7. WHEN el usuario valida esquemas THEN el sistema SHALL usar bibliotecas estándar (como Ajv) para validación en tiempo real
+8. WHEN hay errores de validación THEN el sistema SHALL mostrar mensajes específicos y resaltar campos problemáticos
+9. WHEN el usuario exporta esquemas THEN el sistema SHALL generar JSON Schema válido según especificación oficial
+10. WHEN el usuario importa esquemas THEN el sistema SHALL cargar JSON Schema existente y reconstruir la interfaz visual
+11. WHEN el usuario duplica campos THEN el sistema SHALL permitir copiar configuraciones existentes para acelerar creación
+12. WHEN el usuario organiza esquemas THEN el sistema SHALL permitir agrupar y categorizar esquemas por proyecto o propósito
 
 ### Requirement 3
 

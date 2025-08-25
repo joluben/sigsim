@@ -1,5 +1,9 @@
 # Roadmap SigSim V2
 
+## Tema Oscuro
+La aplicación debe ser capaz de ser accesible en modo oscuro.
+
+
 ## Implementación SAAS
 La solución debe ser capaz de ser desplegada en un entorno de producción como AWS o Azure. Debe ser posible acceder a la aplicación mediante un navegador web.
 

@@ -98,31 +98,169 @@
   - Agregar ConnectionTester para validar conectividad
   - _Requirements: 3.1, 3.2, 3.3, 3.5_
 
-## 6. Generadores de Payload
+## 6. JSON Schema Builder - Constructor Visual de Payloads
 
-- [x] 6.1 Implementar generador visual de JSON (JSON Builder)
-  - Crear interfaz PayloadGenerator base
-  - Implementar VisualPayloadGenerator con reglas predefinidas
-  - Crear generadores de campo para números aleatorios, strings, UUIDs, timestamps
-  - _Requirements: 2.1, 2.2, 2.3_
+- [ ] 6.1 Configuración e infraestructura del JSON Schema Builder
+  - [x] 6.1.1 Inicializar módulo JSON Schema Builder en la app existente
+    - Crear estructura de carpetas: `components/SchemaBuilder/`
+    - Instalar dependencias: Ajv para validación, Monaco Editor, @dnd-kit para drag-and-drop
+    - Configurar tipos TypeScript para JSONSchemaField, RandomRules, etc.
+    - _Requirements: 2.1, 2.8, 2.12_
 
-- [x] 6.2 Crear UI del JSON Builder
-  - Implementar PayloadBuilder con interfaz drag-and-drop
-  - Crear FieldEditor para configurar tipos y reglas de generación
-  - Implementar PayloadPreview para mostrar JSON generado
-  - _Requirements: 2.1, 2.2, 2.3_
+  - [x] 6.1.2 Crear interfaces y tipos base del sistema
+    - Definir interfaces JSONSchemaField, RandomRules, JSONSchemaTemplate
+    - Crear tipos para generadores de campo específicos por tipo de dato
+    - Implementar validaciones Zod para formularios del constructor
+    - _Requirements: 2.2, 2.3, 2.1.1_
 
-- [x] 6.3 Implementar generador de código Python
-  - Crear PythonPayloadGenerator con ejecución segura de código
-  - Implementar SafePythonExecutor con sandboxing y timeout
-  - Crear validador de código Python para seguridad
-  - _Requirements: 2.4, 7.5_
+- [ ] 6.2 Componente principal y layout del Schema Builder
+  - [x] 6.2.1 Implementar componente principal JSONSchemaBuilder
+    - Crear layout principal con dos paneles: editor visual y vista previa JSON
+    - Implementar barra de herramientas con botones Guardar, Validar, Cargar, Exportar
+    - Configurar sistema de pestañas para alternar entre vista visual y JSON
+    - _Requirements: 2.1, 2.8, 2.1.9_
 
-- [x] 6.4 Integrar editor de código Python en la UI
-  - Implementar PythonCodeEditor usando Monaco Editor
-  - Agregar syntax highlighting y validación básica
-  - Crear sistema de preview para código Python
-  - _Requirements: 2.4, 2.5_
+  - [x] 6.2.2 Crear sistema de navegación y estado del builder
+    - Implementar Zustand store para estado del schema en construcción
+    - Crear contexto React para compartir estado entre componentes
+    - Agregar sistema de undo/redo para cambios en el schema
+    - _Requirements: 2.8, 2.9, 2.11_
+
+- [ ] 6.3 Editor visual de campos (SchemaVisualEditor)
+  - [ ] 6.3.1 Implementar listado de campos definidos
+    - Crear FieldList component con shadcn/ui cards para mostrar campos
+    - Mostrar nombre, tipo, valor fijo/aleatorio y acciones (editar/eliminar)
+    - Implementar drag-and-drop para reordenar campos usando @dnd-kit
+    - _Requirements: 2.2, 2.3, 2.12, 2.1.11_
+
+  - [ ] 6.3.2 Crear formulario de configuración de campos
+    - Implementar FieldConfigPanel con React Hook Form y shadcn/ui
+    - Crear FieldTypeSelector con iconos para cada tipo de dato
+    - Agregar toggle para valor fijo vs aleatorio con validación condicional
+    - _Requirements: 2.2, 2.3, 2.4, 2.1.4_
+
+  - [ ] 6.3.3 Implementar configuración de valores fijos
+    - Crear inputs específicos por tipo: text, number, date picker, boolean toggle
+    - Implementar validación en tiempo real según el tipo seleccionado
+    - Agregar preview del valor fijo en el formulario
+    - _Requirements: 2.4, 2.1.5_
+
+- [ ] 6.4 Sistema de reglas de generación aleatoria
+  - [ ] 6.4.1 Crear RandomRulesEditor para configuración de reglas
+    - Implementar formularios específicos por tipo de dato con shadcn/ui
+    - Para strings: campos pattern (regex), minLength, maxLength
+    - Para números: campos minimum, maximum, multipleOf, exclusiveMinimum/Maximum
+    - Para fechas: date pickers para minDate y maxDate
+    - _Requirements: 2.5, 2.1.1, 2.1.2, 2.1.3_
+
+  - [ ] 6.4.2 Agregar validación de reglas de generación
+    - Validar que maximum >= minimum para números
+    - Validar que maxLength >= minLength para strings
+    - Validar patrones regex y mostrar errores específicos
+    - Validar rangos de fechas lógicos
+    - _Requirements: 2.9, 2.1.8_
+
+  - [ ] 6.4.3 Implementar preview de reglas aleatorias
+    - Crear SampleGenerator para mostrar ejemplos de valores generados
+    - Mostrar múltiples muestras para que el usuario vea la variabilidad
+    - Actualizar preview en tiempo real al cambiar reglas
+    - _Requirements: 2.1.6_
+
+- [ ] 6.5 Soporte para estructuras complejas (objetos y arrays)
+  - [ ] 6.5.1 Implementar NestedObjectEditor para objetos anidados
+    - Crear interfaz recursiva para agregar subcampos dentro de objetos
+    - Implementar navegación breadcrumb para niveles de anidamiento
+    - Agregar validación de nombres únicos dentro del mismo nivel
+    - _Requirements: 2.6, 2.1.12_
+
+  - [ ] 6.5.2 Crear ArrayItemEditor para configuración de arrays
+    - Implementar selector de tipo para elementos del array
+    - Agregar configuración de minItems y maxItems
+    - Permitir definir esquemas complejos para elementos (objetos anidados)
+    - _Requirements: 2.7, 2.1.1_
+
+  - [ ] 6.5.3 Agregar visualización jerárquica de estructuras complejas
+    - Crear TreeView component para mostrar estructura anidada
+    - Implementar collapse/expand para objetos y arrays
+    - Agregar indicadores visuales de profundidad y tipo
+    - _Requirements: 2.6, 2.7_
+
+- [ ] 6.6 Vista previa y validación en tiempo real
+  - [ ] 6.6.1 Implementar SchemaPreview con Monaco Editor
+    - Integrar Monaco Editor para mostrar JSON Schema generado
+    - Configurar syntax highlighting y formateo automático
+    - Actualizar preview en tiempo real al modificar campos
+    - _Requirements: 2.8, 2.14_
+
+  - [ ] 6.6.2 Crear sistema de validación con Ajv
+    - Implementar JSONSchemaValidator usando biblioteca Ajv
+    - Mostrar errores de validación con mensajes específicos y ubicación
+    - Resaltar campos problemáticos en el editor visual
+    - _Requirements: 2.9, 2.1.7, 2.1.8_
+
+  - [ ] 6.6.3 Agregar generación de datos de muestra
+    - Implementar SampleDataGenerator basado en el schema construido
+    - Mostrar múltiples ejemplos de datos generados
+    - Permitir regenerar muestras para validar reglas aleatorias
+    - _Requirements: 2.1.6_
+
+- [ ] 6.7 Persistencia y gestión de plantillas
+  - [ ] 6.7.1 Implementar sistema de guardado y carga
+    - Crear funcionalidad para guardar schema en base de datos
+    - Implementar carga de schemas existentes y reconstrucción de UI
+    - Agregar validación de integridad al cargar schemas
+    - _Requirements: 2.10, 2.11_
+
+  - [ ] 6.7.2 Crear sistema de plantillas reutilizables
+    - Implementar SchemaTemplateManager para CRUD de plantillas
+    - Agregar categorización de plantillas (IoT, Web, Mobile, etc.)
+    - Crear galería de plantillas predefinidas comunes
+    - _Requirements: 2.1.12_
+
+  - [ ] 6.7.3 Agregar funcionalidades de importación/exportación
+    - Implementar importación de JSON Schema estándar existente
+    - Crear exportación a JSON Schema válido según especificación
+    - Agregar funcionalidad de duplicar campos existentes
+    - _Requirements: 2.1.9, 2.1.10, 2.1.11_
+
+- [ ] 6.8 Editor de código Python integrado (alternativa avanzada)
+  - [ ] 6.8.1 Implementar PythonCodeEditor con Monaco
+    - Integrar Monaco Editor con syntax highlighting para Python
+    - Configurar autocompletado y validación básica de sintaxis
+    - Crear sistema de preview para código Python personalizado
+    - _Requirements: 2.13, 2.14_
+
+  - [ ] 6.8.2 Crear sistema de ejecución segura de Python
+    - Implementar SafePythonExecutor con sandboxing y timeout
+    - Agregar contexto predefinido (datetime, random, uuid, math, faker)
+    - Crear validador de código Python para detectar código malicioso
+    - _Requirements: 2.13, 7.5_
+
+- [ ] 6.9 Backend APIs para JSON Schema Builder
+  - [ ] 6.9.1 Implementar APIs de validación y conversión
+    - Crear endpoint POST /api/schema/validate para validar campos
+    - Implementar POST /api/schema/convert-to-standard para generar JSON Schema
+    - Agregar POST /api/schema/generate-sample para datos de muestra
+    - _Requirements: 2.1.7, 2.1.6, 2.1.9_
+
+  - [ ] 6.9.2 Crear APIs para gestión de plantillas
+    - Implementar CRUD completo para plantillas (/api/schema/templates)
+    - Agregar filtrado por categoría y búsqueda de plantillas
+    - Crear endpoint para importar/exportar JSON Schema estándar
+    - _Requirements: 2.1.12, 2.1.9, 2.1.10_
+
+- [ ] 6.10 Generadores de payload basados en JSON Schema
+  - [ ] 6.10.1 Implementar JSONSchemaPayloadGenerator
+    - Crear generador que procese campos visuales y produzca JSON
+    - Implementar generadores específicos: StringGenerator, NumberGenerator, etc.
+    - Agregar soporte para objetos anidados y arrays con ObjectGenerator y ArrayGenerator
+    - _Requirements: 7.4, 2.5, 2.6, 2.7_
+
+  - [ ] 6.10.2 Integrar generadores con motor de simulación
+    - Conectar JSONSchemaPayloadGenerator con DeviceSimulator
+    - Implementar generación periódica según reglas definidas
+    - Agregar manejo de metadata de dispositivo en payloads generados
+    - _Requirements: 7.4, 7.5_
 
 ## 7. Motor de Simulación
 

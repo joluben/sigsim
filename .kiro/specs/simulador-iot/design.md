@@ -70,6 +70,50 @@ El simulador de dispositivos IoT es una aplicación web moderna que permite gene
 - asyncio para programación asíncrona
 - Librerías específicas: paho-mqtt, aiohttp, aiokafka, websockets
 
+## JSON Schema Builder Architecture
+
+### Visual Schema Editor Design
+
+El JSON Schema Builder es el componente central para la definición de payloads. Utiliza una arquitectura modular que permite:
+
+1. **Construcción Visual**: Interfaz drag-and-drop para crear esquemas sin código
+2. **Validación en Tiempo Real**: Validación inmediata usando Ajv
+3. **Vista Previa Dinámica**: Generación de JSON Schema estándar en tiempo real
+4. **Generación de Muestras**: Creación de datos de ejemplo basados en reglas
+5. **Persistencia Flexible**: Guardado como plantillas reutilizables
+
+### Schema Builder Flow
+
+```mermaid
+graph TD
+    A[Usuario agrega campo] --> B[Selecciona tipo de dato]
+    B --> C[Configura nombre y requerido]
+    C --> D{Valor fijo o aleatorio?}
+    D -->|Fijo| E[Ingresa valor fijo]
+    D -->|Aleatorio| F[Configura reglas de generación]
+    E --> G[Valida configuración]
+    F --> G
+    G --> H{Es válido?}
+    H -->|No| I[Muestra errores específicos]
+    H -->|Sí| J[Actualiza vista previa]
+    I --> C
+    J --> K[Genera JSON Schema estándar]
+    K --> L[Permite guardar/exportar]
+```
+
+### Field Type Mapping
+
+| Tipo Visual | JSON Schema Type | Reglas Soportadas |
+|-------------|------------------|-------------------|
+| string | string | pattern, minLength, maxLength |
+| integer | integer | minimum, maximum, multipleOf |
+| float | number | minimum, maximum, multipleOf |
+| boolean | boolean | N/A |
+| date | string (format: date) | minDate, maxDate |
+| datetime | string (format: date-time) | minDate, maxDate |
+| object | object | properties, required |
+| array | array | items, minItems, maxItems |
+
 ## Components and Interfaces
 
 ### Frontend Components
@@ -112,31 +156,69 @@ interface Device {
 - DeviceMetadataEditor: Editor de metadata personalizada
 ```
 
-#### 3. Payload Builder
+#### 3. JSON Schema Builder
 ```typescript
-interface PayloadSchema {
+interface JSONSchemaField {
   id: string;
   name: string;
-  type: 'visual' | 'python';
-  schema?: JSONSchema; // Para tipo visual
-  python_code?: string; // Para tipo python
+  type: 'string' | 'integer' | 'float' | 'boolean' | 'date' | 'datetime' | 'object' | 'array';
+  required: boolean;
+  valueType: 'fixed' | 'random';
+  fixedValue?: any;
+  randomRules?: RandomRules;
+  children?: JSONSchemaField[]; // Para objetos anidados
+  arrayItemType?: JSONSchemaField; // Para arrays
+  defaultValue?: any;
+  description?: string;
 }
 
-interface JSONSchema {
-  fields: JSONField[];
+interface RandomRules {
+  // Para strings
+  pattern?: string;
+  minLength?: number;
+  maxLength?: number;
+  
+  // Para números
+  minimum?: number;
+  maximum?: number;
+  multipleOf?: number;
+  exclusiveMinimum?: boolean;
+  exclusiveMaximum?: boolean;
+  
+  // Para arrays
+  minItems?: number;
+  maxItems?: number;
+  
+  // Para fechas
+  minDate?: Date;
+  maxDate?: Date;
 }
 
-interface JSONField {
+interface JSONSchemaTemplate {
+  id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-  generator: FieldGenerator;
+  description?: string;
+  category?: string;
+  schema: JSONSchemaField[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Componentes principales
-- PayloadBuilder: Constructor visual drag-and-drop
-- FieldEditor: Editor de campos individuales
-- PythonCodeEditor: Editor Monaco para código Python
-- PayloadPreview: Vista previa del JSON generado
+// Componentes principales del JSON Schema Builder
+- JSONSchemaBuilder: Componente principal con drag-and-drop
+- FieldConfigPanel: Panel de configuración de campos individuales
+- FieldTypeSelector: Selector de tipos de datos con iconos
+- ValueConfigurationPanel: Panel para configurar valores fijos vs aleatorios
+- RandomRulesEditor: Editor específico para reglas de generación aleatoria
+- NestedObjectEditor: Editor para objetos anidados con recursión
+- ArrayItemEditor: Editor para definir tipos de elementos de arrays
+- SchemaPreview: Vista previa del JSON Schema en tiempo real
+- SchemaValidator: Validador usando Ajv con mensajes de error específicos
+- SampleDataGenerator: Generador de datos de muestra basado en el esquema
+- SchemaImportExport: Componente para importar/exportar JSON Schema
+- FieldDuplicator: Utilidad para duplicar campos existentes
+- SchemaTemplateManager: Gestor de plantillas y categorización
+- PythonCodeEditor: Editor Monaco integrado como alternativa
 ```
 
 #### 4. Target Systems
@@ -180,6 +262,58 @@ interface SimulationStatus {
 - DeviceStatusGrid: Estado de dispositivos individuales
 - LogViewer: Visualización de logs en tiempo real
 - SimulationControls: Botones start/stop/pause
+```
+
+### JSON Schema Builder APIs
+
+```python
+# API Endpoints para JSON Schema Builder
+@router.post("/api/schema/validate")
+async def validate_json_schema(request: JSONSchemaValidationRequest) -> JSONSchemaValidationResponse:
+    """Valida campos de esquema y retorna JSON Schema estándar"""
+    
+@router.post("/api/schema/generate-sample")
+async def generate_sample_data(request: SampleDataGenerationRequest) -> SampleDataGenerationResponse:
+    """Genera datos de muestra basados en el esquema"""
+    
+@router.post("/api/schema/convert-to-standard")
+async def convert_to_standard_schema(schema_fields: List[JSONSchemaFieldModel]) -> Dict[str, Any]:
+    """Convierte esquema visual a JSON Schema estándar"""
+    
+@router.post("/api/schema/import-standard")
+async def import_standard_schema(json_schema: Dict[str, Any]) -> List[JSONSchemaFieldModel]:
+    """Importa JSON Schema estándar y convierte a formato visual"""
+    
+@router.get("/api/schema/templates")
+async def list_schema_templates(
+    category: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100
+) -> List[JSONSchemaTemplateResponse]:
+    """Lista plantillas de esquemas con filtros opcionales"""
+    
+@router.post("/api/schema/templates")
+async def create_schema_template(template: JSONSchemaTemplateCreate) -> JSONSchemaTemplateResponse:
+    """Crea nueva plantilla de esquema"""
+    
+@router.get("/api/schema/templates/{template_id}")
+async def get_schema_template(template_id: str) -> JSONSchemaTemplateResponse:
+    """Obtiene detalles de una plantilla específica"""
+    
+@router.put("/api/schema/templates/{template_id}")
+async def update_schema_template(
+    template_id: str, 
+    template: JSONSchemaTemplateUpdate
+) -> JSONSchemaTemplateResponse:
+    """Actualiza plantilla existente"""
+    
+@router.delete("/api/schema/templates/{template_id}")
+async def delete_schema_template(template_id: str) -> Dict[str, str]:
+    """Elimina plantilla de esquema"""
+    
+@router.get("/api/schema/templates/categories")
+async def list_template_categories() -> List[str]:
+    """Lista categorías disponibles de plantillas"""
 ```
 
 ### Backend Services
@@ -260,7 +394,7 @@ class DeviceSimulator:
                 await self._handle_error(e)
 ```
 
-#### 3. Payload Generators
+#### 3. JSON Schema Payload Generators
 ```python
 class PayloadGenerator(ABC):
     """Interfaz base para generadores de payload"""
@@ -270,26 +404,163 @@ class PayloadGenerator(ABC):
         """Genera un payload JSON"""
         pass
 
-class VisualPayloadGenerator(PayloadGenerator):
-    """Generador basado en esquema visual"""
+class JSONSchemaPayloadGenerator(PayloadGenerator):
+    """Generador basado en JSON Schema visual"""
     
-    def __init__(self, schema: JSONSchema):
-        self.schema = schema
-        self.field_generators = self._build_generators()
+    def __init__(self, schema_fields: List[JSONSchemaField]):
+        self.schema_fields = schema_fields
+        self.field_generators = self._build_field_generators()
+        self.validator = self._create_validator()
+    
+    def _build_field_generators(self) -> Dict[str, FieldGenerator]:
+        """Construye generadores específicos para cada campo"""
+        generators = {}
+        
+        for field in self.schema_fields:
+            if field.valueType == 'fixed':
+                generators[field.name] = FixedValueGenerator(field.fixedValue)
+            else:
+                generators[field.name] = self._create_random_generator(field)
+        
+        return generators
+    
+    def _create_random_generator(self, field: JSONSchemaField) -> FieldGenerator:
+        """Crea generador aleatorio según tipo y reglas"""
+        if field.type == 'string':
+            return StringGenerator(
+                pattern=field.randomRules.pattern,
+                min_length=field.randomRules.minLength,
+                max_length=field.randomRules.maxLength
+            )
+        elif field.type in ['integer', 'float']:
+            return NumberGenerator(
+                minimum=field.randomRules.minimum,
+                maximum=field.randomRules.maximum,
+                multiple_of=field.randomRules.multipleOf,
+                is_integer=(field.type == 'integer')
+            )
+        elif field.type == 'boolean':
+            return BooleanGenerator()
+        elif field.type in ['date', 'datetime']:
+            return DateTimeGenerator(
+                min_date=field.randomRules.minDate,
+                max_date=field.randomRules.maxDate,
+                include_time=(field.type == 'datetime')
+            )
+        elif field.type == 'object':
+            return ObjectGenerator(field.children)
+        elif field.type == 'array':
+            return ArrayGenerator(
+                item_generator=self._create_random_generator(field.arrayItemType),
+                min_items=field.randomRules.minItems,
+                max_items=field.randomRules.maxItems
+            )
     
     async def generate(self, device_metadata: Dict = None) -> Dict:
-        """Aplica reglas del schema para generar JSON"""
+        """Genera payload según esquema JSON definido"""
         result = {}
         
-        for field in self.schema.fields:
-            generator = self.field_generators[field.name]
-            result[field.name] = await generator.generate()
+        for field in self.schema_fields:
+            if field.required or random.choice([True, False]):
+                generator = self.field_generators[field.name]
+                result[field.name] = await generator.generate()
+            elif field.defaultValue is not None:
+                result[field.name] = field.defaultValue
         
         # Sobrescribir con metadata del dispositivo si aplica
         if device_metadata:
             result.update(device_metadata)
+        
+        # Validar resultado contra JSON Schema
+        if not self.validator.validate(result):
+            raise PayloadValidationError(self.validator.errors)
             
         return result
+
+class StringGenerator(FieldGenerator):
+    """Generador para campos string con reglas específicas"""
+    
+    def __init__(self, pattern: str = None, min_length: int = 1, max_length: int = 50):
+        self.pattern = pattern
+        self.min_length = min_length
+        self.max_length = max_length
+        self.regex_generator = None
+        
+        if pattern:
+            import rstr
+            self.regex_generator = rstr
+    
+    async def generate(self) -> str:
+        if self.pattern and self.regex_generator:
+            # Generar string que coincida con el patrón regex
+            return self.regex_generator.xeger(self.pattern)
+        else:
+            # Generar string aleatorio de longitud específica
+            import string
+            length = random.randint(self.min_length, self.max_length)
+            return ''.join(random.choices(
+                string.ascii_letters + string.digits, 
+                k=length
+            ))
+
+class NumberGenerator(FieldGenerator):
+    """Generador para campos numéricos con restricciones"""
+    
+    def __init__(
+        self, 
+        minimum: float = None, 
+        maximum: float = None,
+        multiple_of: float = None,
+        is_integer: bool = False
+    ):
+        self.minimum = minimum or 0
+        self.maximum = maximum or 100
+        self.multiple_of = multiple_of
+        self.is_integer = is_integer
+    
+    async def generate(self) -> Union[int, float]:
+        if self.is_integer:
+            value = random.randint(int(self.minimum), int(self.maximum))
+        else:
+            value = random.uniform(self.minimum, self.maximum)
+        
+        if self.multiple_of:
+            value = round(value / self.multiple_of) * self.multiple_of
+        
+        return int(value) if self.is_integer else value
+
+class ObjectGenerator(FieldGenerator):
+    """Generador para objetos anidados"""
+    
+    def __init__(self, children: List[JSONSchemaField]):
+        self.children = children
+        self.child_generator = JSONSchemaPayloadGenerator(children)
+    
+    async def generate(self) -> Dict:
+        return await self.child_generator.generate()
+
+class ArrayGenerator(FieldGenerator):
+    """Generador para arrays con elementos tipados"""
+    
+    def __init__(
+        self, 
+        item_generator: FieldGenerator,
+        min_items: int = 1,
+        max_items: int = 5
+    ):
+        self.item_generator = item_generator
+        self.min_items = min_items
+        self.max_items = max_items
+    
+    async def generate(self) -> List:
+        count = random.randint(self.min_items, self.max_items)
+        items = []
+        
+        for _ in range(count):
+            item = await self.item_generator.generate()
+            items.append(item)
+        
+        return items
 
 class PythonPayloadGenerator(PayloadGenerator):
     """Generador basado en código Python personalizado"""
@@ -299,16 +570,123 @@ class PythonPayloadGenerator(PayloadGenerator):
         self.executor = SafePythonExecutor()
     
     async def generate(self, device_metadata: Dict = None) -> Dict:
-        """Ejecuta código Python del usuario"""
+        """Ejecuta código Python del usuario en entorno seguro"""
         context = {
             'device_metadata': device_metadata or {},
             'datetime': datetime,
             'random': random,
             'uuid': uuid,
-            'math': math
+            'math': math,
+            'faker': faker,  # Para generar datos realistas
+            'time': time
         }
         
         return await self.executor.execute(self.code, context)
+
+class JSONSchemaValidator:
+    """Validador de JSON Schema usando Ajv"""
+    
+    def __init__(self, schema_fields: List[JSONSchemaField]):
+        self.schema = self._build_json_schema(schema_fields)
+        self.validator = self._create_ajv_validator()
+    
+    def _build_json_schema(self, fields: List[JSONSchemaField]) -> Dict:
+        """Convierte campos visuales a JSON Schema estándar"""
+        properties = {}
+        required = []
+        
+        for field in fields:
+            field_schema = self._field_to_json_schema(field)
+            properties[field.name] = field_schema
+            
+            if field.required:
+                required.append(field.name)
+        
+        return {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "properties": properties,
+            "required": required
+        }
+    
+    def _field_to_json_schema(self, field: JSONSchemaField) -> Dict:
+        """Convierte un campo visual a definición JSON Schema"""
+        schema = {"type": self._map_type(field.type)}
+        
+        # Agregar restricciones según las reglas
+        if field.randomRules:
+            rules = field.randomRules
+            
+            if field.type == 'string':
+                if rules.pattern:
+                    schema["pattern"] = rules.pattern
+                if rules.minLength:
+                    schema["minLength"] = rules.minLength
+                if rules.maxLength:
+                    schema["maxLength"] = rules.maxLength
+            
+            elif field.type in ['integer', 'float']:
+                if rules.minimum is not None:
+                    schema["minimum"] = rules.minimum
+                if rules.maximum is not None:
+                    schema["maximum"] = rules.maximum
+                if rules.multipleOf:
+                    schema["multipleOf"] = rules.multipleOf
+            
+            elif field.type == 'array':
+                if rules.minItems:
+                    schema["minItems"] = rules.minItems
+                if rules.maxItems:
+                    schema["maxItems"] = rules.maxItems
+                if field.arrayItemType:
+                    schema["items"] = self._field_to_json_schema(field.arrayItemType)
+        
+        # Agregar objetos anidados
+        if field.type == 'object' and field.children:
+            nested_properties = {}
+            nested_required = []
+            
+            for child in field.children:
+                nested_properties[child.name] = self._field_to_json_schema(child)
+                if child.required:
+                    nested_required.append(child.name)
+            
+            schema["properties"] = nested_properties
+            if nested_required:
+                schema["required"] = nested_required
+        
+        # Agregar valor por defecto
+        if field.defaultValue is not None:
+            schema["default"] = field.defaultValue
+        
+        # Agregar descripción
+        if field.description:
+            schema["description"] = field.description
+        
+        return schema
+    
+    def _map_type(self, field_type: str) -> str:
+        """Mapea tipos visuales a tipos JSON Schema"""
+        type_mapping = {
+            'string': 'string',
+            'integer': 'integer',
+            'float': 'number',
+            'boolean': 'boolean',
+            'date': 'string',
+            'datetime': 'string',
+            'object': 'object',
+            'array': 'array'
+        }
+        return type_mapping.get(field_type, 'string')
+    
+    def validate(self, data: Dict) -> bool:
+        """Valida datos contra el esquema"""
+        return self.validator.validate(data)
+    
+    @property
+    def errors(self) -> List[Dict]:
+        """Retorna errores de validación detallados"""
+        return self.validator.errors if hasattr(self.validator, 'errors') else []
 ```
 
 #### 4. Target Connectors
@@ -421,15 +799,31 @@ class Device(Base):
     payload = relationship("Payload")
     target_system = relationship("TargetSystem")
 
+class JSONSchemaTemplate(Base):
+    __tablename__ = "json_schema_templates"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False)
+    description = Column(Text)
+    category = Column(String, default="general")
+    schema_fields = Column(JSON, nullable=False)  # Lista de JSONSchemaField
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class Payload(Base):
     __tablename__ = "payloads"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
-    type = Column(Enum(PayloadType), nullable=False)  # 'visual' | 'python'
-    schema = Column(JSON)  # Para tipo visual
+    type = Column(Enum(PayloadType), nullable=False)  # 'json_schema' | 'python'
+    schema_fields = Column(JSON)  # Para tipo json_schema - Lista de JSONSchemaField
     python_code = Column(Text)  # Para tipo python
+    template_id = Column(String, ForeignKey("json_schema_templates.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relaciones
+    template = relationship("JSONSchemaTemplate")
 
 class TargetSystem(Base):
     __tablename__ = "target_systems"
@@ -465,23 +859,99 @@ class DeviceCreate(BaseModel):
     send_interval: int = Field(default=10, ge=1, le=3600)
     is_enabled: bool = True
 
+class JSONSchemaFieldModel(BaseModel):
+    id: str
+    name: str = Field(..., min_length=1, max_length=100)
+    type: Literal['string', 'integer', 'float', 'boolean', 'date', 'datetime', 'object', 'array']
+    required: bool = True
+    valueType: Literal['fixed', 'random']
+    fixedValue: Optional[Any] = None
+    randomRules: Optional[RandomRulesModel] = None
+    children: Optional[List['JSONSchemaFieldModel']] = None
+    arrayItemType: Optional['JSONSchemaFieldModel'] = None
+    defaultValue: Optional[Any] = None
+    description: Optional[str] = None
+
+class RandomRulesModel(BaseModel):
+    # Para strings
+    pattern: Optional[str] = None
+    minLength: Optional[int] = Field(None, ge=0)
+    maxLength: Optional[int] = Field(None, ge=1)
+    
+    # Para números
+    minimum: Optional[float] = None
+    maximum: Optional[float] = None
+    multipleOf: Optional[float] = Field(None, gt=0)
+    exclusiveMinimum: Optional[bool] = False
+    exclusiveMaximum: Optional[bool] = False
+    
+    # Para arrays
+    minItems: Optional[int] = Field(None, ge=0)
+    maxItems: Optional[int] = Field(None, ge=1)
+    
+    # Para fechas
+    minDate: Optional[datetime] = None
+    maxDate: Optional[datetime] = None
+    
+    @validator('maxLength')
+    def validate_max_length(cls, v, values):
+        min_length = values.get('minLength')
+        if min_length is not None and v is not None and v < min_length:
+            raise ValueError('maxLength must be greater than or equal to minLength')
+        return v
+    
+    @validator('maximum')
+    def validate_maximum(cls, v, values):
+        minimum = values.get('minimum')
+        if minimum is not None and v is not None and v < minimum:
+            raise ValueError('maximum must be greater than or equal to minimum')
+        return v
+
+class JSONSchemaTemplateCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: Optional[str] = None
+    category: str = Field(default="general", max_length=50)
+    schema_fields: List[JSONSchemaFieldModel]
+    
+    @validator('schema_fields')
+    def validate_schema_fields(cls, v):
+        if not v:
+            raise ValueError('At least one schema field is required')
+        return v
+
 class PayloadCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    type: PayloadType
-    schema: Optional[Dict] = None
+    type: Literal['json_schema', 'python']
+    schema_fields: Optional[List[JSONSchemaFieldModel]] = None
     python_code: Optional[str] = None
+    template_id: Optional[str] = None
     
-    @validator('schema')
-    def validate_schema(cls, v, values):
-        if values.get('type') == PayloadType.VISUAL and not v:
-            raise ValueError('Schema is required for visual payloads')
+    @validator('schema_fields')
+    def validate_schema_fields(cls, v, values):
+        if values.get('type') == 'json_schema' and not v:
+            raise ValueError('Schema fields are required for JSON Schema payloads')
         return v
     
     @validator('python_code')
     def validate_python_code(cls, v, values):
-        if values.get('type') == PayloadType.PYTHON and not v:
-            raise ValueError('Python code is required for python payloads')
+        if values.get('type') == 'python' and not v:
+            raise ValueError('Python code is required for Python payloads')
         return v
+
+class JSONSchemaValidationRequest(BaseModel):
+    schema_fields: List[JSONSchemaFieldModel]
+
+class JSONSchemaValidationResponse(BaseModel):
+    is_valid: bool
+    errors: List[Dict[str, Any]] = []
+    json_schema: Optional[Dict[str, Any]] = None
+
+class SampleDataGenerationRequest(BaseModel):
+    schema_fields: List[JSONSchemaFieldModel]
+    count: int = Field(default=1, ge=1, le=10)
+
+class SampleDataGenerationResponse(BaseModel):
+    samples: List[Dict[str, Any]]
 ```
 
 ## Error Handling
